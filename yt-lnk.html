@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>YouTube links</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdn.rawgit.com/jquery/esprima/2.2.0/esprima.js"></script>
+    <script src="https://cdn.rawgit.com/estools/escodegen/1.6.1/escodegen.browser.min.js"></script>
+    <script src="yt-lnk.js" type="application/javascript"></script>
+</head>
+<body>
+<h3>Enter YouTube video link</h3>
+<input type="text" id="txt_video_url" size="50" value="https://www.youtube.com/watch?v=07FYdnEawAQ"/>
+<button type="button" id="btn_links">Links</button>
+<table id="tbl_result">
+</table>
+<script type="application/javascript">
+
+    $("#btn_links").click(function () {
+        $("#btn_links").prop("disabled", true);
+        $("#btn_links").text('Wait...');
+
+        $('#tbl_result').empty()
+
+        var videoUrl = $('#txt_video_url').val();
+
+        extract(videoUrl).done(function (result) {
+            log(result);
+
+            $("#btn_links").prop("disabled", false);
+            $("#btn_links").text('Links');
+
+            $('<tr>').html('<td colspan="2">Title: ' + result.title + '</td>').appendTo('#tbl_result');
+            $('<tr>').html('<td colspan="2">Note: Right click for save as </td>').appendTo('#tbl_result');
+
+            $('<tr>').html("<td></td><td>Type</td><td>Extra</td>").appendTo('#tbl_result');
+
+            $.each(result.formats, function (i, fmt) {
+                var lnk = '<a target="_blank" href="' + fmt.url + '" download>Link</a>';
+                var ext = fmt.ext;
+
+                var extra = (fmt.abr ? (fmt.abr + 'k') : '') + (fmt.height ? (fmt.height + 'p') : '') + ' ' + (fmt.format_note ? fmt.format_note : '');
+
+                $('<tr>').html("<td>" + lnk + "</td><td>" + ext + "</td><td>" + extra + "</td>").appendTo('#tbl_result');
+            });
+        });
+    })
+    ;
+</script>
+</body>
+</html>
