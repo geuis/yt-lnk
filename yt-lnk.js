@@ -451,59 +451,64 @@ function decryptSignature(s, playerUrl) {
         playerUrl = 'https:' + playerUrl;
     }
 
-    download(playerUrl).done(function (jscode) {
+    if (LAST_PLAYER_URL === playerUrl && LAST_FUNC !== null) {
+        var func = LAST_FUNC;
+        var signature = func(s);
+        deferred.resolve(signature);
+    } else {
+        download(playerUrl).done(function (jscode) {
+            var func = null;
 
-        var func = null;
+            if (LAST_PLAYER_URL === playerUrl && LAST_FUNC !== null) {
+                func = LAST_FUNC;
+            } else {
 
-        if (LAST_PLAYER_URL === playerUrl && LAST_FUNC !== null) {
-            func = LAST_FUNC;
-        } else {
-
-            var r = /\.sig\|\|([a-zA-Z0-9$]+)\(/.exec(jscode);
-            if (r === null) {
-                log("Couldn't find the signature code with regex");
-            }
-
-            var funcname = r[1];
-
-            var ast = esprima.parse(jscode);
-
-            function traverse(object, visitor) {
-                var key, child;
-
-                if (visitor.call(null, object) === false) {
-                    return;
+                var r = /\.sig\|\|([a-zA-Z0-9$]+)\(/.exec(jscode);
+                if (r === null) {
+                    log("Couldn't find the signature code with regex");
                 }
-                for (key in object) {
-                    if (object.hasOwnProperty(key)) {
-                        child = object[key];
-                        if (typeof child === 'object' && child !== null) {
-                            traverse(child, visitor);
+
+                var funcname = r[1];
+
+                var ast = esprima.parse(jscode);
+
+                function traverse(object, visitor) {
+                    var key, child;
+
+                    if (visitor.call(null, object) === false) {
+                        return;
+                    }
+                    for (key in object) {
+                        if (object.hasOwnProperty(key)) {
+                            child = object[key];
+                            if (typeof child === 'object' && child !== null) {
+                                traverse(child, visitor);
+                            }
                         }
                     }
                 }
+
+                traverse(ast, function (node) {
+                    if (node.type === 'FunctionDeclaration' && node.id.name == funcname) {
+                        func = eval('(' + escodegen.generate(node) + ')');
+                    }
+
+                    if (node.type === 'VariableDeclarator') {
+                        try {
+                            eval(escodegen.generate(node));
+                        } catch (ignore) {
+                        }
+                    }
+                });
+
+                LAST_PLAYER_URL = playerUrl;
+                LAST_FUNC = func;
             }
 
-            traverse(ast, function (node) {
-                if (node.type === 'FunctionDeclaration' && node.id.name == funcname) {
-                    func = eval('(' + escodegen.generate(node) + ')');
-                }
-
-                if (node.type === 'VariableDeclarator') {
-                    try {
-                        eval(escodegen.generate(node));
-                    } catch (ignore) {
-                    }
-                }
-            });
-
-            LAST_PLAYER_URL = playerUrl;
-            LAST_FUNC = func;
-        }
-
-        var signature = func(s);
-        deferred.resolve(signature);
-    });
+            var signature = func(s);
+            deferred.resolve(signature);
+        });
+    }
 
     return deferred.promise();
 }
@@ -691,7 +696,6 @@ function extractSupport(video_id, video_webpage, age_gate, embed_webpage, video_
         }
         if (encodedUrlMap.indexOf('rtmpe%3Dyes') !== -1) {
             return fail('rtmpe downloads are not supported');
-            return;
         }
 
         var arr = encodedUrlMap.split(',');
@@ -741,15 +745,17 @@ function extractSupport(video_id, video_webpage, age_gate, embed_webpage, video_
 
                 var playerUrl = JSON.parse(jsplayer_url_json);
 
-                queue((function (formatId, url) {
-                    decryptSignature(encrypted_sig, playerUrl).done(function (signature) {
-                        url += '&signature=' + signature;
-                        formats.push({
-                            format_id: formatId,
-                            url: url
+                (function (formatId, url) {
+                    queue(function () {
+                        return decryptSignature(encrypted_sig, playerUrl).done(function (signature) {
+                            url += '&signature=' + signature;
+                            formats.push({
+                                format_id: formatId,
+                                url: url
+                            });
                         });
                     });
-                })(formatId, url));
+                })(formatId, url);
             } else if (url.indexOf('signature') !== -1) { // already decrypted
                 formats.push({
                     format_id: formatId,
@@ -801,7 +807,7 @@ function extractSupport(video_id, video_webpage, age_gate, embed_webpage, video_
         var dashManifestUrl = video_info['dashmpd'][0];
 
         queue(function () {
-            parseDashManifest(video_id, dashManifestUrl, playerUrl, age_gate).done(function (fmts) {
+            return parseDashManifest(video_id, dashManifestUrl, playerUrl, age_gate).done(function (fmts) {
                 deferred.resolve(buildResult(fmts ? formats.concat(fmts) : formats));
             });
         });
