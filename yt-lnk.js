@@ -393,8 +393,11 @@ function download(url) {
 
     var deferred = $.Deferred();
 
+    //var userAgent = navigator.userAgent;
+    var userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.36';
+
     $.get('http://query.yahooapis.com/v1/public/yql', {
-        q: 'select * from xClient where url="' + url + '" and ua="' + navigator.userAgent + '"',
+        q: 'select * from xClient where url="' + url + '" and ua="' + userAgent + '"',
         format: 'json',
         env: 'store://datatables.org/alltableswithkeys',
         callback: ''
