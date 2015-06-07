@@ -472,23 +472,28 @@ function decryptSignature(s, playerUrl) {
 
                 var ast = esprima.parse(jscode);
 
-                function traverse(object, visitor) {
+                function traverse(object, level, visitor) {
                     var key, child;
 
                     if (visitor.call(null, object) === false) {
                         return;
                     }
+
+                    if (level > 8) {
+                        return;
+                    }
+
                     for (key in object) {
                         if (object.hasOwnProperty(key)) {
                             child = object[key];
                             if (typeof child === 'object' && child !== null) {
-                                traverse(child, visitor);
+                                traverse(child, level + 1, visitor);
                             }
                         }
                     }
                 }
 
-                traverse(ast, function (node) {
+                traverse(ast, 0, function (node) {
                     if (node.type === 'FunctionDeclaration' && node.id.name == funcname) {
                         func = eval('(' + escodegen.generate(node) + ')');
                     }
