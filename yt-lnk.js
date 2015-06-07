@@ -602,7 +602,8 @@ function extractSupport(video_id, video_webpage, age_gate, embed_webpage, video_
         video_uploader_id = mobj[1];
     }
     else {
-        return fail('unable to extract uploader nickname');
+        //return fail('unable to extract uploader nickname');
+        log('unable to extract uploader nickname');
     }
 
     // title
@@ -694,6 +695,10 @@ function extractSupport(video_id, video_webpage, age_gate, embed_webpage, video_
         var size = arr.length;
 
         for (var i = 0; i < size; i++) {
+            if (arr[i].length == 0) {
+                continue;
+            }
+
             var urlData = parseQS(arr[i]);
 
             if (!urlData.hasOwnProperty('itag') || !urlData.hasOwnProperty('url')) {
@@ -742,6 +747,11 @@ function extractSupport(video_id, video_webpage, age_gate, embed_webpage, video_
                         });
                     });
                 })(formatId, url));
+            } else if (url.indexOf('signature') !== -1) { // already decrypted
+                formats.push({
+                    format_id: formatId,
+                    url: url
+                });
             }
         }
     } else if (video_info.hasOwnProperty('hlsvp')) {
@@ -789,7 +799,7 @@ function extractSupport(video_id, video_webpage, age_gate, embed_webpage, video_
 
         queue(function () {
             parseDashManifest(video_id, dashManifestUrl, playerUrl, age_gate).done(function (fmts) {
-                deferred.resolve(buildResult(formats.concat(fmts)));
+                deferred.resolve(buildResult(fmts ? formats.concat(fmts) : formats));
             });
         });
     }
