@@ -40,15 +40,15 @@
 
             log(results);
 
-            $('<tr>').html("<td>Url</td><td>Title</td><td>Duration</td><td>User</td>").appendTo('#tbl_result');
+            $('<tr>').html("<td>Media Links</td><td>Url</td><td>Title</td><td>Duration</td><td>User</td>").appendTo('#tbl_result');
 
             $.each(results, function (i, r) {
                 var url = '<a target="_blank" href="' + r.url + '">' + r.url + '</a>';
                 var title = r.title;
                 var duration = r.duration;
                 var user = r.user;
-
-                $('<tr>').html('<td>' + url + '</td><td>' + title + '</td><td>' + duration + '</td><td>' + user + '</td>').appendTo('#tbl_result');
+                var userPage = '<a href="https://www.youtube.com/user/' + user +'" target="_blank">' + user + '</a>';
+                $('<tr>').html('<td>'+ getLinksButton(r.url) +'</td><td>' + url + '</td><td>' + title + '</td><td>' + duration + '</td><td>' + userPage + '</td>').appendTo('#tbl_result');
             });
         });
     }
@@ -91,6 +91,17 @@
             });
         });
     });
+
+    function getLinksButton(url) {
+        return '<button onclick="getLinks(\'' + url + '\')">Get Links</button>';
+    }
+
+    function getLinks(url) {
+        $('#txt_video_url').val(url);
+        $('#btn_links').click();
+    }
 </script>
+
+<small><a href="https://github.com/aldenml/yt-lnk">Fork me</a></small>
 </body>
 </html>
