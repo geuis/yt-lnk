@@ -20,12 +20,24 @@
 </table>
 <script type="application/javascript">
 
-    $('#btn_search').click(function () {
+    function submitSearch() {
+        if ($('#btn_search').prop('disabled')) {
+            return; //busy
+        }
+
+
+        $("#btn_search").prop('disabled', true);
+        $("#btn_search").text('Searching...');
+
+
         $('#tbl_result').empty()
 
         var keywords = $('#txt_keywords').val().trim();
 
         search(keywords).done(function (results) {
+            $("#btn_search").prop('disabled', false);
+            $("#btn_search").text('Search');
+
             log(results);
 
             $('<tr>').html("<td>Url</td><td>Title</td><td>Duration</td><td>User</td>").appendTo('#tbl_result');
@@ -39,10 +51,19 @@
                 $('<tr>').html('<td>' + url + '</td><td>' + title + '</td><td>' + duration + '</td><td>' + user + '</td>').appendTo('#tbl_result');
             });
         });
+    }
+
+    $('#btn_search').click(submitSearch);
+
+    $('#txt_keywords').keyup(function (event) {
+        if (event.keyCode == 13 || event.keyCode == 32) {
+            submitSearch();
+        }
     });
 
+
     $("#btn_links").click(function () {
-        $("#btn_links").prop("disabled", true);
+        $("#btn_links").prop('disabled', true);
         $("#btn_links").text('Wait...');
 
         $('#tbl_result').empty()
@@ -52,7 +73,7 @@
         extract(videoUrl).done(function (result) {
             log(result);
 
-            $("#btn_links").prop("disabled", false);
+            $("#btn_links").prop('disabled', false);
             $("#btn_links").text('Links');
 
             $('<tr>').html('<td colspan="2">Title: ' + result.title + '</td>').appendTo('#tbl_result');
