@@ -862,3 +862,32 @@ function extract(url) {
 
     return deferred.promise();
 }
+
+function search(q) {
+
+    var deferred = $.Deferred();
+
+    var url = 'http://www.youtube.com/results?search_query=' + encodeURIComponent(q) + '&hl=en';
+
+    download(url).done(function (html) {
+        var re = /<h3 class="yt-lockup-title"><a href="(.*?)".*? title="(.*?)".*? Duration: (.*?)\.<\/span>.*?by <a href="\/user\/(.*?)"/ig;
+        var m = null;
+
+        var results = [];
+
+        while (m = re.exec(html)) {
+            var r = {
+                url: 'http://www.youtube.com' + m[1],
+                title: m[2],
+                duration: m[3],
+                user: m[4]
+            };
+
+            results.push(r);
+        }
+
+        deferred.resolve(results);
+    });
+
+    return deferred.promise();
+}

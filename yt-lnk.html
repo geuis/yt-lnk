@@ -9,12 +9,37 @@
     <script src="yt-lnk.js" type="application/javascript"></script>
 </head>
 <body>
-<h3>Enter YouTube video link</h3>
+<h3>Enter keywords or YouTube video link</h3>
+<input type="text" id="txt_keywords" size="50"/>
+<button type="button" id="btn_search">Search</button>
+<br/>
+<br/>
 <input type="text" id="txt_video_url" size="50" placeholder="https://www.youtube.com/watch?v=######"/>
 <button type="button" id="btn_links">Links</button>
 <table id="tbl_result">
 </table>
 <script type="application/javascript">
+
+    $('#btn_search').click(function () {
+        $('#tbl_result').empty()
+
+        var keywords = $('#txt_keywords').val().trim();
+
+        search(keywords).done(function (results) {
+            log(results);
+
+            $('<tr>').html("<td>Url</td><td>Title</td><td>Duration</td><td>User</td>").appendTo('#tbl_result');
+
+            $.each(results, function (i, r) {
+                var url = '<a target="_blank" href="' + r.url + '">' + r.url + '</a>';
+                var title = r.title;
+                var duration = r.duration;
+                var user = r.user;
+
+                $('<tr>').html('<td>' + url + '</td><td>' + title + '</td><td>' + duration + '</td><td>' + user + '</td>').appendTo('#tbl_result');
+            });
+        });
+    });
 
     $("#btn_links").click(function () {
         $("#btn_links").prop("disabled", true);
@@ -22,7 +47,7 @@
 
         $('#tbl_result').empty()
 
-        var videoUrl = $('#txt_video_url').val();
+        var videoUrl = $('#txt_video_url').val().trim();
 
         extract(videoUrl).done(function (result) {
             log(result);
@@ -44,8 +69,7 @@
                 $('<tr>').html("<td>" + lnk + "</td><td>" + ext + "</td><td>" + extra + "</td>").appendTo('#tbl_result');
             });
         });
-    })
-    ;
+    });
 </script>
 </body>
 </html>
